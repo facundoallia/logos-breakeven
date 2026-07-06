@@ -4,6 +4,9 @@ import useSWR from 'swr';
 import { CurvesResponse } from '@/lib/types';
 import { BreakevenView } from './BreakevenView';
 import { CurvesView } from './CurvesView';
+import { CTABanner } from './CTABanner';
+import { BrokersALYC } from './BrokersALYC';
+import { FAQ } from './FAQ';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -69,8 +72,17 @@ export function BreakevenApp() {
         </>
       )}
 
+      {/* Conversion + trust blocks */}
+      {data && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32, marginTop: 32 }}>
+          <CTABanner />
+          <BrokersALYC />
+          <FAQ />
+        </div>
+      )}
+
       {/* Footer / disclaimer */}
-      <footer style={{ marginTop: 24, paddingTop: 14, borderTop: '1px solid #DDE6EF', fontSize: 11, color: '#8ba5bf', lineHeight: 1.5 }}>
+      <footer style={{ marginTop: 32, paddingTop: 14, borderTop: '1px solid #DDE6EF', fontSize: 11, color: '#8ba5bf', lineHeight: 1.5 }}>
         {data?.asOf && <div>Datos al {new Date(data.asOf).toLocaleString('es-AR')} · Precios: data912.com (demorados) · Metadata/TIR: bonistas.com</div>}
         <div style={{ marginTop: 4 }}>
           La devaluación implícita se refiere al dólar <strong>oficial</strong> (A3500), no al CCL/MEP.
