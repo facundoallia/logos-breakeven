@@ -64,8 +64,8 @@ export function BreakevenView({ nominal, other, kind, spot, spotDate }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      {/* Term-structure summary chips (short / mid / long) */}
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${reps.length}, 1fr)`, gap: 10 }}>
+      {/* Term-structure summary chips (short / mid / long) — auto-fit wraps on mobile */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
         {reps.map((p) => (
           <div key={p.days} style={{
             background: 'linear-gradient(135deg, #EBF5FB 0%, #F8FAFC 100%)',
