@@ -1,0 +1,48 @@
+/** Formatting helpers. Rates are decimals (0.185 -> "18,5%"). */
+
+export function pct(x: number | null | undefined, dec = 1): string {
+  if (x == null || !Number.isFinite(x)) return '—';
+  return `${(x * 100).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec })}%`;
+}
+
+export function num(x: number | null | undefined, dec = 2): string {
+  if (x == null || !Number.isFinite(x)) return '—';
+  return x.toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
+/** Pesos with no decimals, e.g. "$1.860". */
+export function ars(x: number | null | undefined): string {
+  if (x == null || !Number.isFinite(x)) return '—';
+  return `$${Math.round(x).toLocaleString('es-AR')}`;
+}
+
+/** "hasta [mes-año]" label from an ISO date. */
+export function monthYear(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+}
+
+/** Compact month-axis label, e.g. "ago-26". */
+export function monthAxis(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const mon = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${mon}-${yy}`;
+}
+
+export function shortDate(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
+}
+
+/** Horizon in years -> friendly "X meses" / "X,X años". */
+export function horizon(years: number): string {
+  if (years < 1) return `${Math.round(years * 12)} meses`;
+  return `${years.toLocaleString('es-AR', { maximumFractionDigits: 1 })} años`;
+}
