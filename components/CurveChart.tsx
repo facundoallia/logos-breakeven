@@ -2,6 +2,7 @@
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
+import { yearsToMonthYear } from '@/lib/format';
 
 export interface CurveSeries {
   name: string;
@@ -39,13 +40,14 @@ export function CurveChart({ series, height = 300, yLabel = 'Tasa anual (%)' }: 
   return (
     <div style={{ width: '100%', height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={rows} margin={{ top: 8, right: 20, bottom: 24, left: 4 }}>
+        <LineChart data={rows} margin={{ top: 8, right: 20, bottom: 34, left: 4 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#DDE6EF" />
           <XAxis
             dataKey="years" type="number" domain={['dataMin', 'dataMax']}
-            tickFormatter={(v) => `${(+v).toFixed(1)}a`}
-            tick={{ fontSize: 10, fill: '#8ba5bf' }}
-            label={{ value: 'Plazo (años)', position: 'insideBottom', offset: -12, fontSize: 10, fill: '#8ba5bf' }}
+            tickFormatter={(v) => yearsToMonthYear(+v)}
+            tick={{ fontSize: 9.5, fill: '#8ba5bf' }}
+            angle={-30} textAnchor="end" height={44}
+            label={{ value: 'Vencimiento', position: 'insideBottom', offset: 0, fontSize: 10, fill: '#8ba5bf' }}
           />
           <YAxis
             tickFormatter={(v) => `${(+v).toFixed(0)}%`}
@@ -54,7 +56,7 @@ export function CurveChart({ series, height = 300, yLabel = 'Tasa anual (%)' }: 
           />
           <Tooltip
             formatter={(v) => (typeof v === 'number' ? `${v.toFixed(2)}%` : '—')}
-            labelFormatter={(v) => `Plazo: ${(+v).toFixed(2)} años`}
+            labelFormatter={(v) => `Vencimiento: ${yearsToMonthYear(+v)}`}
             contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #DDE6EF' }}
           />
           <Legend wrapperStyle={{ fontSize: 11 }} />

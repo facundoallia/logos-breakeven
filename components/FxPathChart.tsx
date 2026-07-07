@@ -3,7 +3,7 @@ import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from 'recharts';
 import { BreakevenPoint, projectFx } from '@/lib/analytics';
-import { ars, shortDate } from '@/lib/format';
+import { ars, shortDate, yearsToMonthYear } from '@/lib/format';
 
 interface Props {
   series: BreakevenPoint[];
@@ -36,7 +36,7 @@ export function FxPathChart({ series, spot, spotDate }: Props) {
       </div>
       <div style={{ width: '100%', height: 280 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={rows} margin={{ top: 8, right: 20, bottom: 22, left: 10 }}>
+          <ComposedChart data={rows} margin={{ top: 8, right: 20, bottom: 34, left: 10 }}>
             <defs>
               <linearGradient id="fxfill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#3b1a56" stopOpacity={0.18} />
@@ -46,18 +46,19 @@ export function FxPathChart({ series, spot, spotDate }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke="#DDE6EF" />
             <XAxis
               dataKey="years" type="number" domain={[0, 'dataMax']}
-              tickFormatter={(v) => (v === 0 ? 'hoy' : `${(+v).toFixed(1)}a`)}
-              tick={{ fontSize: 10, fill: '#8ba5bf' }}
-              label={{ value: 'Plazo (años)', position: 'insideBottom', offset: -12, fontSize: 10, fill: '#8ba5bf' }}
+              tickFormatter={(v) => yearsToMonthYear(+v)}
+              tick={{ fontSize: 9.5, fill: '#8ba5bf' }}
+              angle={-30} textAnchor="end" height={44}
+              label={{ value: 'Vencimiento', position: 'insideBottom', offset: 0, fontSize: 10, fill: '#8ba5bf' }}
             />
             <YAxis
-              tickFormatter={(v) => `$${(+v / 1000).toFixed(1)}k`}
+              tickFormatter={(v) => `$${Math.round(+v).toLocaleString('es-AR')}`}
               tick={{ fontSize: 10, fill: '#8ba5bf' }}
-              domain={['dataMin', 'dataMax']}
+              domain={['dataMin', 'dataMax']} width={64}
             />
             <Tooltip
               formatter={(v) => (typeof v === 'number' ? ars(v) : '—')}
-              labelFormatter={(v) => (+v === 0 ? 'Hoy' : `En ${(+v).toFixed(2)} años`)}
+              labelFormatter={(v) => yearsToMonthYear(+v)}
               contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #DDE6EF' }}
             />
             <ReferenceLine y={Math.round(spot)} stroke="#8ba5bf" strokeDasharray="4 3"

@@ -24,6 +24,14 @@ export function monthYear(iso: string | null): string {
   return d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
 }
 
+/** Years-from-today -> "dic-2026" axis label (full year). 0 -> "hoy". */
+export function yearsToMonthYear(years: number, baseMs: number = Date.now()): string {
+  if (years <= 0.001) return 'hoy';
+  const d = new Date(baseMs + years * 365 * 86_400_000);
+  const mon = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '');
+  return `${mon}-${d.getFullYear()}`;
+}
+
 /** Compact month-axis label, e.g. "ago-26". */
 export function monthAxis(iso: string | null): string {
   if (!iso) return '';

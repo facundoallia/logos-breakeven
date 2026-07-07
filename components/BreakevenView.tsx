@@ -87,8 +87,8 @@ export function BreakevenView({ nominal, other, kind, spot, spotDate }: Props) {
             const tag = i === 0 ? 'Corto plazo' : i === reps.length - 1 ? 'Largo plazo' : 'Cerca de 1 año';
             return (
               <div key={p.days} style={{
-                background: 'linear-gradient(135deg, #EBF5FB 0%, #F8FAFC 100%)',
-                border: '1px solid #BDD0E0', borderRadius: 10, padding: '13px 15px',
+                background: '#fff', border: '1px solid #DDE6EF', borderLeft: `3px solid ${accent}`,
+                borderRadius: 8, padding: '13px 15px',
               }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: accent, marginBottom: 5 }}>
                   {tag}
@@ -140,8 +140,8 @@ export function BreakevenView({ nominal, other, kind, spot, spotDate }: Props) {
         <SensitivityPanel iNom={head.iNom} linkedRate={head.other} breakeven={head.breakeven} kind={kind} />
       </Section>
 
-      {/* Tabla detallada — al final (referencia) */}
-      <Section title={`${beName} por plazo (detalle)`}>
+      {/* Tabla detallada — al final, desplegable (referencia) */}
+      <Section title={`${beName} por plazo (detalle)`} collapsible defaultOpen={false}>
         <BreakevenTable series={series} kind={kind} />
       </Section>
     </div>
