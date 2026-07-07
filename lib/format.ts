@@ -41,8 +41,13 @@ export function shortDate(iso: string | null): string {
   return d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
 }
 
-/** Horizon in years -> friendly "X meses" / "X,X años". */
+/** Horizon in years -> friendly "1 mes" / "X meses" / "1 año" / "X,X años". */
 export function horizon(years: number): string {
-  if (years < 1) return `${Math.round(years * 12)} meses`;
-  return `${years.toLocaleString('es-AR', { maximumFractionDigits: 1 })} años`;
+  if (years < 1) {
+    const m = Math.max(1, Math.round(years * 12));
+    return m === 1 ? '1 mes' : `${m} meses`;
+  }
+  const y = +years.toFixed(1);
+  if (y === 1) return '1 año';
+  return `${y.toLocaleString('es-AR', { maximumFractionDigits: 1 })} años`;
 }

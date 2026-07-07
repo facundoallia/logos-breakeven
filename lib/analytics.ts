@@ -306,6 +306,24 @@ export function monthlyBreakevenPath(
   return out;
 }
 
+/**
+ * Drop interior breakeven points that sit clearly off the curve (a single illiquid/mispriced
+ * bond), so downstream forwards and heatmaps aren't skewed by one outlier. Same rule as the
+ * per-pair de-noise: dropped if it deviates from the neighbour interpolation by > tolPp.
+ */
+export function denoiseBreakevens(series: BreakevenPoint[], tolPp = 0.02): BreakevenPoint[] {
+  if (series.length <= 2) return series;
+  const kept: BreakevenPoint[] = [series[0]];
+  for (let i = 1; i < series.length - 1; i++) {
+    const a = series[i - 1], b = series[i + 1], c = series[i];
+    const w = b.years === a.years ? 0 : (c.years - a.years) / (b.years - a.years);
+    const interp = a.breakeven + w * (b.breakeven - a.breakeven);
+    if (Math.abs(c.breakeven - interp) <= tolPp) kept.push(c);
+  }
+  kept.push(series[series.length - 1]);
+  return kept;
+}
+
 /** Convenience: pick the longest-horizon breakeven point (the "hasta [fecha]" headline). */
 export function headlinePoint(series: BreakevenPoint[]): BreakevenPoint | null {
   if (series.length === 0) return null;

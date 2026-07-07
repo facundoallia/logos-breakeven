@@ -83,15 +83,15 @@ export function SensitivityPanel({ iNom, linkedRate, breakeven, kind }: Props) {
       </div>
 
       {/* Chart */}
-      <div style={{ width: '100%', height: 240 }}>
+      <div style={{ width: '100%', height: 270 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={rows} margin={{ top: 8, right: 16, bottom: 20, left: 4 }}>
+          <LineChart data={rows} margin={{ top: 8, right: 16, bottom: 30, left: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#DDE6EF" />
             <XAxis
               dataKey="scenario" type="number" domain={['dataMin', 'dataMax']}
               tickFormatter={(v) => `${(+v).toFixed(0)}%`}
               tick={{ fontSize: 10, fill: '#8ba5bf' }}
-              label={{ value: `${scenarioName} realizada`, position: 'insideBottom', offset: -10, fontSize: 10, fill: '#8ba5bf' }}
+              label={{ value: `${scenarioName} realizada (%)`, position: 'insideBottom', offset: -8, fontSize: 10, fill: '#8ba5bf' }}
             />
             <YAxis tickFormatter={(v) => `${(+v).toFixed(0)}%`} tick={{ fontSize: 10, fill: '#8ba5bf' }} />
             <Tooltip
@@ -99,7 +99,7 @@ export function SensitivityPanel({ iNom, linkedRate, breakeven, kind }: Props) {
               labelFormatter={(v) => `${scenarioName}: ${(+v).toFixed(1)}%`}
               contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #DDE6EF' }}
             />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Legend verticalAlign="top" align="center" height={26} wrapperStyle={{ fontSize: 11, paddingBottom: 4 }} />
             <ReferenceLine x={+(breakeven * 100).toFixed(2)} stroke="#3b1a56" strokeDasharray="4 3"
               label={{ value: 'Breakeven', fontSize: 10, fill: '#3b1a56', position: 'top' }} />
             <ReferenceLine x={+(assumed * 100).toFixed(2)} stroke="#ffc107" strokeWidth={2} />

@@ -62,31 +62,58 @@ export function BreakevenView({ nominal, other, kind, spot, spotDate }: Props) {
     { name: beName, color: isInfl ? '#D97706' : '#3b1a56', dashed: true, data: series.map((p) => ({ years: p.years, rate: p.breakeven })) },
   ];
 
+  const heroTitle = isInfl ? '¿Cuánta inflación espera el mercado?' : '¿Cuánto espera el mercado que suba el dólar oficial?';
+  const heroTip = isInfl
+    ? 'Se obtiene comparando un bono a tasa fija con uno CER al mismo plazo (ecuación de Fisher): (1 + tasa fija) / (1 + tasa real) − 1. Es lo que descuentan los precios, no un pronóstico oficial.'
+    : 'Se obtiene comparando un bono a tasa fija con uno dollar-linked al mismo plazo: (1 + tasa fija) / (1 + tasa dollar-linked) − 1. Es contra el dólar oficial mayorista (A3500).';
+  const heroIntro = isInfl
+    ? 'Inflación promedio anual que hoy descuentan los precios de los bonos. Cambia según hasta cuándo mires: abajo, el tramo corto, cerca de un año y el plazo más largo disponible.'
+    : 'Devaluación promedio anual del dólar oficial (A3500) que descuentan los bonos, según el plazo.';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      {/* Term-structure summary chips (short / mid / long) — auto-fit wraps on mobile */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-        {reps.map((p) => (
-          <div key={p.days} style={{
-            background: 'linear-gradient(135deg, #EBF5FB 0%, #F8FAFC 100%)',
-            border: '1px solid #BDD0E0', borderRadius: 10, padding: '12px 14px',
-          }}>
-            <div style={{ fontSize: 11, color: '#4a6880', marginBottom: 2 }}>
-              hasta {monthYear(p.vencimiento)} · {horizon(p.years)}
-            </div>
-            <div style={{ fontSize: 30, fontWeight: 800, color: accent, lineHeight: 1.1, letterSpacing: '-0.5px' }}>
-              {pct(p.breakeven, 1)}
-            </div>
-            <div style={{ fontSize: 11.5, color: '#4a6880', marginTop: 2 }}>
-              anual · <strong style={{ color: '#0D1B2A' }}>{pct(toMonthly(p.breakeven), 1)}</strong> mensual (TEM)
-            </div>
-            {showFx && (
-              <div style={{ fontSize: 11.5, color: '#4a6880', marginTop: 6, paddingTop: 6, borderTop: '1px dashed #BDD0E0' }}>
-                dólar oficial ~<strong style={{ color: '#3b1a56' }}>{ars(projectFx(spot!, p.breakeven, p.years))}</strong>
+      {/* HERO — bloque principal: qué espera el mercado, con los plazos clave */}
+      <div>
+        <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#0D1B2A', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center' }}>
+          {heroTitle}<InfoTip text={heroTip} />
+        </h2>
+        <p style={{ margin: '0 0 12px', fontSize: 13, color: '#4a6880', lineHeight: 1.5, maxWidth: 640 }}>
+          {heroIntro}
+        </p>
+
+        {/* Term-structure summary chips (corto / ~1 año / largo) — auto-fit wraps on mobile */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+          {reps.map((p, i) => {
+            const tag = i === 0 ? 'Corto plazo' : i === reps.length - 1 ? 'Largo plazo' : 'Cerca de 1 año';
+            return (
+              <div key={p.days} style={{
+                background: 'linear-gradient(135deg, #EBF5FB 0%, #F8FAFC 100%)',
+                border: '1px solid #BDD0E0', borderRadius: 10, padding: '13px 15px',
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: accent, marginBottom: 5 }}>
+                  {tag}
+                </div>
+                <div style={{ fontSize: 11.5, color: '#4a6880', marginBottom: 3 }}>
+                  Promedio hasta <strong style={{ color: '#0D1B2A' }}>{monthYear(p.vencimiento)}</strong> ({horizon(p.years)})
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                  <span style={{ fontSize: 32, fontWeight: 800, color: accent, lineHeight: 1.05, letterSpacing: '-0.5px' }}>
+                    {pct(p.breakeven, 1)}
+                  </span>
+                  <span style={{ fontSize: 12, color: '#4a6880', fontWeight: 600 }}>anual</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: '#4a6880', marginTop: 3 }}>
+                  equivale a <strong style={{ color: '#0D1B2A' }}>{pct(toMonthly(p.breakeven), 1)}</strong> por mes
+                </div>
+                {showFx && (
+                  <div style={{ fontSize: 11.5, color: '#4a6880', marginTop: 7, paddingTop: 7, borderTop: '1px dashed #BDD0E0' }}>
+                    dólar oficial ~<strong style={{ color: '#3b1a56' }}>{ars(projectFx(spot!, p.breakeven, p.years))}</strong>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
 
       <CaveatNote kind={kind} />
@@ -105,16 +132,17 @@ export function BreakevenView({ nominal, other, kind, spot, spotDate }: Props) {
         </Section>
       )}
 
-      <Section title={`${beName} por plazo`}>
-        <BreakevenTable series={series} kind={kind} />
-      </Section>
-
       <Section title="Heatmap de forwards">
         <ForwardHeatmap series={series} kindLabel={isInfl ? 'inflación' : 'devaluación'} />
       </Section>
 
       <Section title="Sensibilidad">
         <SensitivityPanel iNom={head.iNom} linkedRate={head.other} breakeven={head.breakeven} kind={kind} />
+      </Section>
+
+      {/* Tabla detallada — al final (referencia) */}
+      <Section title={`${beName} por plazo (detalle)`}>
+        <BreakevenTable series={series} kind={kind} />
       </Section>
     </div>
   );
@@ -137,11 +165,11 @@ function CaveatNote({ kind }: { kind: 'inflation' | 'deval' }) {
       <div>
         {isInfl ? (
           <>
-            <strong>Ojo con el tramo más corto.</strong> Los bonos CER ajustan con ~45 días de rezago
-            y el dato de inflación del mes pasado puede no estar publicado todavía, así que buena parte
-            del ajuste del bono más corto ya está <em>devengado</em> (conocido). En plazos cortos mirá la
-            <strong> tasa mensual (TEM)</strong>, que es más directa que la anualizada.
-            <InfoTip text="Ej.: al 5 de julio, un LECER a fin de julio ya tiene devengada casi toda su inflación de junio (que se publica a mediados de julio). Su tasa real 'de mercado' incorpora ese dato conocido, no una expectativa pura." />
+            <strong>A tener en cuenta en el tramo más corto.</strong> Los bonos CER ajustan con ~45 días de rezago
+            y el dato de inflación del mes anterior puede no estar publicado todavía, por lo que buena parte
+            del ajuste del bono más corto ya está <em>devengado</em> (conocido). En plazos cortos conviene
+            observar la <strong>tasa mensual (TEM)</strong>, más directa que la anualizada.
+            <InfoTip text="Ejemplo: a comienzos de un mes, un LECER que vence a fin de ese mes ya tiene devengada casi toda la inflación del mes anterior (que el INDEC publica a mitad de mes). Su tasa real 'de mercado' incorpora ese dato ya conocido, no una expectativa pura." />
           </>
         ) : (
           <>

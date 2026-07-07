@@ -1,6 +1,6 @@
 'use client';
 import { useMemo } from 'react';
-import { buildForwardMatrix, BreakevenPoint } from '@/lib/analytics';
+import { buildForwardMatrix, denoiseBreakevens, BreakevenPoint } from '@/lib/analytics';
 import { pct, shortDate, horizon } from '@/lib/format';
 import { InfoTip } from './InfoTip';
 
@@ -9,36 +9,68 @@ interface Props {
   kindLabel: string; // "inflación" | "devaluación"
 }
 
-/** Linear blend between two hex colors, t in [0,1]. */
-function blend(a: [number, number, number], b: [number, number, number], t: number): string {
-  const c = a.map((av, i) => Math.round(av + (b[i] - av) * t));
+type RGB = [number, number, number];
+
+/** Linear blend between two RGB colors, t in [0,1]. */
+function blend(a: RGB, b: RGB, t: number): string {
+  const u = Math.max(0, Math.min(1, t));
+  const c = a.map((av, i) => Math.round(av + (b[i] - av) * u));
   return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
+
+function quantile(sorted: number[], q: number): number {
+  const pos = (sorted.length - 1) * q;
+  const lo = Math.floor(pos), hi = Math.ceil(pos);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+}
+
+// Diverging palette: below-median -> cool, median -> neutral, above-median -> warm.
+const COOL: RGB = [199, 224, 244]; // soft blue
+const MID: RGB = [255, 246, 214];  // pale amber
+const HOT: RGB = [214, 40, 40];    // red
 
 /**
  * Heatmap of FORWARD breakevens: each cell (fila = desde, columna = hasta) is the
  * annualized rate the market implies for the segment between those two maturities.
- * The diagonal/lower triangle is empty (only forward-looking segments make sense).
+ * Colors use a diverging scale centred on the median and clamped to the p10–p90 range,
+ * so the map isn't washed out to a single colour by a few extreme cells.
  */
 export function ForwardHeatmap({ series, kindLabel }: Props) {
-  const matrix = useMemo(() => buildForwardMatrix(series), [series]);
+  const clean = useMemo(() => denoiseBreakevens(series), [series]);
+  const matrix = useMemo(() => buildForwardMatrix(clean), [clean]);
 
   const values = matrix.flat().map((c) => c.forward).filter((v): v is number => v != null);
   if (values.length === 0) {
     return <div style={{ fontSize: 13, color: '#8ba5bf', padding: 12 }}>Datos insuficientes para forwards.</div>;
   }
-  const lo = Math.min(...values);
-  const hi = Math.max(...values);
-  const COOL: [number, number, number] = [235, 245, 251]; // #EBF5FB
-  const HOT: [number, number, number] = [220, 38, 38];     // #DC2626
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = quantile(sorted, 0.5);
+  const lo = quantile(sorted, 0.10);
+  const hi = quantile(sorted, 0.90);
 
-  const labels = series.map((p) => (p.vencimiento ? shortDate(p.vencimiento) : horizon(p.years)));
+  const cellColor = (v: number): { bg: string; dark: boolean } => {
+    let t: number; // 0 = coolest, 0.5 = mid, 1 = hottest
+    if (v <= mid) t = mid > lo ? 0.5 * ((v - lo) / (mid - lo)) : 0.25;
+    else t = hi > mid ? 0.5 + 0.5 * ((v - mid) / (hi - mid)) : 0.75;
+    t = Math.max(0, Math.min(1, t));
+    const bg = t <= 0.5 ? blend(COOL, MID, t / 0.5) : blend(MID, HOT, (t - 0.5) / 0.5);
+    return { bg, dark: t > 0.72 };
+  };
+
+  const labels = clean.map((p) => (p.vencimiento ? shortDate(p.vencimiento) : horizon(p.years)));
 
   return (
     <div>
       <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A', marginBottom: 6, display: 'flex', alignItems: 'center' }}>
         Forwards de {kindLabel}
         <InfoTip text={`Cada celda es la ${kindLabel} anualizada que el mercado descuenta SOLO para el tramo entre dos vencimientos (por ejemplo, entre 2027 y 2028), no el promedio desde hoy. Sirve para ver cómo el mercado espera que evolucione a futuro.`} />
+      </div>
+      {/* Leyenda de escala */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: '#8ba5bf', marginBottom: 8 }}>
+        <span>menor</span>
+        <span style={{ display: 'inline-block', width: 90, height: 8, borderRadius: 2, background: `linear-gradient(90deg, ${blend(COOL, MID, 0)}, ${blend(MID, MID, 0)}, ${blend(MID, HOT, 1)})` }} />
+        <span>mayor {kindLabel}</span>
+        <span style={{ marginLeft: 4 }}>(p10–p90)</span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', fontSize: 11 }}>
@@ -58,14 +90,13 @@ export function ForwardHeatmap({ series, kindLabel }: Props) {
                   if (cell.forward == null) {
                     return <td key={j} style={{ background: '#F8FAFC', border: '1px solid #EEF2F7' }} />;
                   }
-                  const t = hi > lo ? (cell.forward - lo) / (hi - lo) : 0.5;
-                  const bg = blend(COOL, HOT, t);
+                  const { bg, dark } = cellColor(cell.forward);
                   return (
                     <td
                       key={j}
                       title={`${labels[i]} → ${labels[j]}: ${pct(cell.forward)} anualizado`}
                       style={{
-                        background: bg, color: t > 0.55 ? '#fff' : '#0D1B2A',
+                        background: bg, color: dark ? '#fff' : '#0D1B2A',
                         border: '1px solid #fff', padding: '5px 8px', textAlign: 'center',
                         fontWeight: 600, whiteSpace: 'nowrap',
                       }}
